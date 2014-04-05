@@ -1,4 +1,5 @@
 /.project
 /.pydevproject
 *.pyc
-.iml
+*.iml
+atlassian-ide-plugin.xml

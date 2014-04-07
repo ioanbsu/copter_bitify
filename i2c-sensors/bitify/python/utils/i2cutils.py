@@ -7,6 +7,9 @@ def i2c_raspberry_pi_bus_number():
     of the Raspberry Pi (with 512MB of RAM) using `/dev/i2c-1`, or
     the original version (with 256MB or RAM) using `/dev/i2c-0`.
     """
+    # alternative way to figure out the rasp pi revision number
+    # revision = ([l[12:-1] for l in open('/proc/cpuinfo', 'r').readlines() if l[:8] == "Revision"] + ['0000'])[0]
+
     cpuinfo = 1
     with open('/proc/cpuinfo','r') as f:
         for line in f:

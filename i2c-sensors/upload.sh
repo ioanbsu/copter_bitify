@@ -1,0 +1,1 @@
+scp -r ./* pi@coder.local:/home/pi/Desktop/projects/copter

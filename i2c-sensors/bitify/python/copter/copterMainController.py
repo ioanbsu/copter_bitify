@@ -15,7 +15,7 @@ Q4_MOTOR_ADDRESS = 0
 
 MOTOR_STOPPED = 450
 
-ALPHA_CONSTANT = 4
+ALPHA_CONSTANT = 30
 
 G_MATRIX = [0.5, 0.5, 0.2]
 
@@ -37,26 +37,30 @@ def sin(angle):
     return math.sin(angle)
 
 
-def cos(yRotation):
-    return math.cos(yRotation)
+def cos(angle):
+    return math.cos(angle)
 
 
-def calculateTorques(pitch, roll, yaw, ang_vel_x, ang_vel_y, ang_vel_z):
-    xTorque = -1 * G_MATRIX[0] * ang_vel_x - ALPHA_CONSTANT * (
+def calculateTorques(roll, pitch, yaw, roll_vel, pitch_vel, yaw_vel):
+    tempTorque = roll
+    roll = pitch
+    pitch = tempTorque
+
+    rollTorque = -1 * G_MATRIX[0] * roll_vel - ALPHA_CONSTANT * (
         sin(roll / 2) * cos(pitch / 2) * cos(yaw / 2) -
         cos(roll / 2) * sin(pitch / 2) * sin(yaw / 2))
-    yTorque = -1 * G_MATRIX[0] * ang_vel_y - ALPHA_CONSTANT * (
+    pitchTorque = -1 * G_MATRIX[1] * pitch_vel - ALPHA_CONSTANT * (
         cos(roll / 2) * sin(pitch / 2) * cos(yaw / 2) +
         sin(roll / 2) * cos(pitch / 2) * sin(yaw / 2))
-    zTorque = -1 * G_MATRIX[0] * ang_vel_z - ALPHA_CONSTANT * (
+    yawTorque = -1 * G_MATRIX[2] * yaw_vel - ALPHA_CONSTANT * (
         cos(roll / 2) * cos(pitch / 2) * sin(yaw / 2) -
         sin(roll / 2) * sin(pitch / 2) * cos(yaw / 2))
-    return [xTorque, yTorque, zTorque]
+    return (rollTorque, pitchTorque, yawTorque)
 
 
-def calculateMotorSpeeds(torques, T):
-    a1, a2, a3 = 62695.9247649, 227272.72727272727, 8620.690
-    t1, t2, t3 = torques[0], torques[1], torques[2]
+def calculateMotorSpeeds(rollTorque, pitchTorque, yawTorque, T):
+    a1, a2, a3 = 62695.9247649, 100, 8620.690
+    t1, t2, t3 = rollTorque, pitchTorque, yawTorque
     constantDesiredTorque = T * a3
     w1 = max(t2 * a1 + t3 * a2 + constantDesiredTorque, 0)
     w2 = max(t1 * a1 - t3 * a2 + constantDesiredTorque, 0)
@@ -67,7 +71,7 @@ def calculateMotorSpeeds(torques, T):
     return [math.sqrt(w1), math.sqrt(w2), math.sqrt(w3), math.sqrt(w4)]
 
 
-def runMotors(q1, q3, q2, q4):
+def runMotors(q1, q2, q3, q4):
     os.system(
         "echo {0}={1} > /dev/servoblaster;"
         "echo {2}={3} > /dev/servoblaster;"
@@ -81,19 +85,21 @@ def runMotors(q1, q3, q2, q4):
 millis = int(round(time.time() * 1000))
 
 while millis + flySeconds * 1000 > int(round(time.time() * 1000)):
-    (pitch, roll, yaw, ang_vel_x, ang_vel_y, ang_vel_z) = imu_controller.read_pitch_roll_yaw_with_speeds()
-    yaw -= math.pi
-    torques = calculateTorques(pitch, roll, yaw, ang_vel_x, ang_vel_y, ang_vel_z)
-    motorSpeeds = calculateMotorSpeeds(torques, init_torque)
+    (pitch, roll, yaw, roll_vel, pitch_vel, yaw_vel) = imu_controller.read_pitch_roll_yaw_with_speeds()
+    roll -= 0.049156023
+    pitch -= 0.005387534
+    (rollTorque, pitchTorque, yawTorque) = calculateTorques(roll, pitch, yaw, roll_vel, pitch_vel, yaw_vel)
+    motorSpeeds = calculateMotorSpeeds(rollTorque, pitchTorque, yawTorque, init_torque)
     adjusted = 2350
     q1 = MOTOR_STOPPED + int(motorSpeeds[0] - adjusted) / 5
     q2 = MOTOR_STOPPED + int(motorSpeeds[1] - adjusted) / 5
     q3 = MOTOR_STOPPED + int(motorSpeeds[2] - adjusted) / 5
     q4 = MOTOR_STOPPED + int(motorSpeeds[3] - adjusted) / 5
-    print "{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}".format(q1, q3, q2, q4,
-                                                                          torques[0], torques[1], torques[2],
-                                                                          pitch, roll, yaw,
-                                                                          ang_vel_x, ang_vel_y, ang_vel_z)
-    runMotors(q1, q3, q2, q4)
+    # print "{0}    {1}    {2}    {3}  {4} {5} {6} {7} {8} {9}".format(q1, q2, q3, q4, rollTorque, pitchTorque, yawTorque,roll,pitch,yaw)
+    print "{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}".format(q1, q2, q3, q4,
+                                                                          rollTorque, pitchTorque, yawTorque,
+                                                                          roll, pitch, yaw,
+                                                                          roll_vel, pitch_vel, yaw_vel)
+    runMotors(q1, q2, q3, q4)
 else:
     runMotors(MOTOR_STOPPED, MOTOR_STOPPED, MOTOR_STOPPED, MOTOR_STOPPED)

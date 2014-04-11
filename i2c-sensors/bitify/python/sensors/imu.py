@@ -1,4 +1,5 @@
 import time
+import math
 
 from bitify.python.sensors.adxl345 import ADXL345
 from bitify.python.sensors.l3g4200d import L3G4200D
@@ -7,18 +8,23 @@ from bitify.python.utils.LowPassFilter import LowPassFilter
 
 
 class IMU(object):
-    low_pass_filter_pitch = LowPassFilter(1)
-    low_pass_filter_roll = LowPassFilter(1)
-    low_pass_filter_yawl = LowPassFilter(10)
+    default_low_pass_power = 2
+    low_pass_filter_pitch = LowPassFilter(default_low_pass_power)
+    low_pass_filter_roll = LowPassFilter(default_low_pass_power)
+    low_pass_filter_yawl = LowPassFilter(default_low_pass_power)
+
+    low_pass_filter_pitch_speed = LowPassFilter(default_low_pass_power)
+    low_pass_filter_roll_speed = LowPassFilter(default_low_pass_power)
+    low_pass_filter_yawl_speed = LowPassFilter(default_low_pass_power)
     K = 0.95
     K1 = 1 - K
-    
+
     def __init__(self, bus, gyro_address, accel_address, compass_address, name, gyro_scale=L3G4200D.FS_2000, accel_scale=ADXL345.AFS_16g):
         self.bus = bus
-        self.gyro_address = gyro_address 
+        self.gyro_address = gyro_address
         self.accel_address = accel_address
         self.name = name
-        self.gyro_scale = gyro_scale 
+        self.gyro_scale = gyro_scale
         self.accel_scale = accel_scale
         self.accelerometer = ADXL345(bus, accel_address, name + "-accelerometer", accel_scale)
         self.gyroscope = L3G4200D(bus, gyro_address, name + "-gyroscope", gyro_scale)
@@ -54,12 +60,12 @@ class IMU(object):
 
         now = time.time()
         self.time_diff = now - self.last_time
-        self.last_time = now 
+        self.last_time = now
         (self.pitch, self.roll) = self.comp_filter(self.rotation_x, self.rotation_y)
 
         # return (self.pitch, self.roll, self.gyro_scaled_x, self.gyro_scaled_y, self.gyro_scaled_z, self.accel_scaled_x, self.accel_scaled_y, self.accel_scaled_z)
         return (self.pitch, self.roll, self.gyro_scaled_x, self.gyro_scaled_y, self.gyro_scaled_z, self.accel_scaled_x, self.accel_scaled_y, self.accel_scaled_z)
-        
+
     def read_x_rotation(self, x, y, z):
         return self.rotation_x
 
@@ -79,17 +85,20 @@ class IMU(object):
         (raw_pitch, raw_roll, self.gyro_scaled_x, self.gyro_scaled_y, \
             self.gyro_scaled_z, self.accel_scaled_x, self.accel_scaled_y, \
             self.accel_scaled_z) = self.read_all()
-        
+
         now = time.time()
         self.time_diff = now - self.last_time
-        self.last_time = now 
-        
+        self.last_time = now
+
         (self.pitch, self.roll) = self.comp_filter(raw_pitch, raw_roll)
         self.yaw = self.compass.read_compensated_bearing(self.pitch, self.roll)
 
-        self.yaw = self.low_pass_filter_yawl.filter(self.yaw)
-        # self.roll-=0.038
-        return (self.pitch, self.roll, self.yaw, self.gyro_scaled_x, self.gyro_scaled_y, self.gyro_scaled_z)
+        self.yaw = self.low_pass_filter_yawl.filter(self.yaw) - math.pi
+
+        return ( self.pitch, self.roll, self.yaw,
+                 self.low_pass_filter_pitch_speed.filter(self.gyro_scaled_x),
+                 self.low_pass_filter_roll_speed.filter(self.gyro_scaled_y),
+                 self.low_pass_filter_yawl_speed.filter(self.gyro_scaled_z))
 
 
     def set_compass_offsets(self,x_offset, y_offset, z_offset):

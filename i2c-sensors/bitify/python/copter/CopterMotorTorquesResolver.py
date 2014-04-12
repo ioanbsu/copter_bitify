@@ -32,8 +32,8 @@ class CopterMotorTorquesResolver(object):
         return (rollTorque, pitchTorque, yawTorque)
 
 
-    def calculateMotorSpeeds(self,rollTorque, pitchTorque, yawTorque, T):
-        a1, a2, a3 = 62695.9247649, 10000, 8620.690
+    def calculateMotorSpeeds(self,rollTorque, pitchTorque, yawTorque, T,z_axe_control):
+        a1, a2, a3 = 62695.9247649, z_axe_control, 8620.690
         t1, t2, t3 = rollTorque, pitchTorque, yawTorque
         constantDesiredTorque = T * a3
         w1 = max(t2 * a1 + t3 * a2 + constantDesiredTorque, 0)

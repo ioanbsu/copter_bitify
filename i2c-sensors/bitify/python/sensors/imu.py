@@ -8,7 +8,7 @@ from bitify.python.utils.LowPassFilter import LowPassFilter
 
 
 class IMU(object):
-    default_low_pass_power = 2
+    default_low_pass_power = 1
     low_pass_filter_pitch = LowPassFilter(default_low_pass_power)
     low_pass_filter_roll = LowPassFilter(default_low_pass_power)
     low_pass_filter_yawl = LowPassFilter(default_low_pass_power)

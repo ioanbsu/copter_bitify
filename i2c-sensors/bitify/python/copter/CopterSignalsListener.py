@@ -21,14 +21,15 @@ class CopterController(object):
     def GET(self, name):
         if len(web.input().items()) == 0:
             return "No parameters"
-        (copter_is_on, copter_torque, is_kill, control_force) = FileUtils.read_file_data()
+        (copter_is_on, copter_torque, is_kill, control_force, z_axe_control) = FileUtils.read_file_data()
         is_on = self.check_for_key_and_return('is_on', copter_is_on)
         torque = self.check_for_key_and_return('copter_torque', copter_torque)
         is_kill = self.check_for_key_and_return('kill', is_kill)
         control_force = self.check_for_key_and_return('control_force', control_force)
+        z_axe_control = self.check_for_key_and_return('z_axe', z_axe_control)
         if is_on != None and torque != None and is_kill != None:
-            FileUtils.write_file_data(is_on, torque, is_kill, control_force)
-            print (is_on, torque, is_kill, control_force)
+            FileUtils.write_file_data(is_on, torque, is_kill, control_force,z_axe_control)
+            print (is_on, torque, is_kill, control_force, z_axe_control)
             return "ACK"
         else:
             return "Failed"

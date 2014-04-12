@@ -1,7 +1,6 @@
 __author__ = 'ivanbahdanau'
 
 import math
-
 ALPHA_CONSTANT = 10
 
 G_MATRIX = [0.5, 0.5, 0.2]

@@ -33,6 +33,8 @@ imu_controller.set_compass_offsets(72, 72, -30)
 
 motorTorques = CopterMotorTorquesResolver()
 
+# test commit 2
+
 while True:
     (copter_is_on, copter_torque, is_kill, control_force,z_axe_control) = FileUtils.read_file_data()
     (pitch, roll, yaw, roll_vel, pitch_vel, yaw_vel) = imu_controller.read_pitch_roll_yaw_with_speeds()

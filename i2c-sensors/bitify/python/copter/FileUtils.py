@@ -25,4 +25,3 @@ def write_file_data(copter_is_on, copter_torque, is_kill, control_force,z_axe_co
         spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         spamwriter.writerow([str(copter_is_on), str(copter_torque), str(is_kill), str(control_force),str(z_axe_control)])
 
-        # commit 2 on master

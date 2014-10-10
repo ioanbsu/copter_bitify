@@ -1,4 +1,5 @@
 import os
+import time
 
 import smbus
 from CopterMotorTorquesResolver import CopterMotorTorquesResolver, MOTOR_STOPPED
@@ -25,7 +26,7 @@ def runMotors(q1, q2, q3, q4):
 
 
 bus = smbus.SMBus(i2c_raspberry_pi_bus_number())
-imu_controller = imu.IMU(bus, 0x69, 0x53, 0x1e, "IMU")
+imu_controller = imu.IMU(bus, 0x69, 0x53, 0x1e, 0x77, "IMU")
 imu_controller.set_compass_offsets(72, 72, -30)
 
 motorTorques = CopterMotorTorquesResolver()
@@ -33,22 +34,24 @@ motorTorques = CopterMotorTorquesResolver()
 while True:
     (copter_is_on, copter_torque, is_kill, control_force,z_axe_control) = FileUtils.read_file_data()
     (pitch, roll, yaw, roll_vel, pitch_vel, yaw_vel) = imu_controller.read_pitch_roll_yaw_with_speeds()
-    roll -= 0.049156023
-    pitch -= 0.005387534
+    (pressure, temperature) = imu_controller.read_temperature_and_pressure()
     (rollTorque, pitchTorque, yawTorque) = motorTorques.calculateTorques(roll, pitch, yaw, roll_vel, pitch_vel,
                                                                          yaw_vel, control_force)
     motorSpeeds = motorTorques.calculateMotorSpeeds(rollTorque, pitchTorque, yawTorque, copter_torque,z_axe_control)
-    (q1, q2, q3, q4) = motorTorques.calculate_motor_adjusted_speeds(motorSpeeds);
+    (q1, q2, q3, q4) = motorTorques.calculate_motor_adjusted_speeds(motorSpeeds)
     # print "{0}    {1}    {2}    {3}  {4} {5} {6} {7} {8} {9}".format(q1, q2, q3, q4, rollTorque, pitchTorque, yawTorque,roll,pitch,yaw)
     if is_kill:
         FileUtils.write_file_data(True, 650, False,30,1000)
         runMotors(MOTOR_STOPPED, MOTOR_STOPPED, MOTOR_STOPPED, MOTOR_STOPPED)
         exit()
     if copter_is_on:
-        print "{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}".format(q1, q2, q3, q4,
-                                                                              rollTorque, pitchTorque, yawTorque,
-                                                                              roll, pitch, yaw,
-                                                                              roll_vel, pitch_vel, yaw_vel)
+        print "{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15}".format(time.time(), pressure,
+                                                                                             temperature, q1, q2, q3,
+                                                                                             q4,
+                                                                                             rollTorque, pitchTorque,
+                                                                                             yawTorque,
+                                                                                             roll, pitch, yaw,
+                                                                                             roll_vel, pitch_vel, yaw_vel)
         runMotors(q1, q2, q3, q4)
     else:
         runMotors(MOTOR_STOPPED, MOTOR_STOPPED, MOTOR_STOPPED, MOTOR_STOPPED)

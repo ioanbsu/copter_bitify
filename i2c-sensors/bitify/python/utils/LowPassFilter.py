@@ -12,8 +12,9 @@ class LowPassFilter:
         self.smoothing = smooting
 
     def filter(self, value):
-        self.lastFilteredValue += (value - self.lastFilteredValue) / self.smoothing
-        return self.lastFilteredValue
+        return value
+        # self.lastFilteredValue += (value - self.lastFilteredValue) / self.smoothing
+        # return self.lastFilteredValue
 
 
 if len(sys.argv) >= 2 and sys.argv[1] == 'test':

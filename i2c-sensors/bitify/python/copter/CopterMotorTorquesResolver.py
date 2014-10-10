@@ -17,8 +17,8 @@ def cos(angle):
 class CopterMotorTorquesResolver(object):
     def calculateTorques(self,roll, pitch, yaw, roll_vel, pitch_vel, yaw_vel,control_force):
         tempTorque = roll
-        roll = pitch
-        pitch = tempTorque
+        # roll = pitch +0.04
+        # pitch = tempTorque - 0.03
 
         rollTorque = -1 * G_MATRIX[0] * roll_vel - control_force * (
             sin(roll / 2) * cos(pitch / 2) * cos(yaw / 2) -

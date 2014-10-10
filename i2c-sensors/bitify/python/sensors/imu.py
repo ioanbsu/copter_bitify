@@ -2,13 +2,14 @@ import time
 import math
 
 from bitify.python.sensors.adxl345 import ADXL345
+from bitify.python.sensors.bmp085 import BMP085
 from bitify.python.sensors.l3g4200d import L3G4200D
 from bitify.python.sensors.hmc5883l import HMC5883L
 from bitify.python.utils.LowPassFilter import LowPassFilter
 
 
 class IMU(object):
-    default_low_pass_power = 1
+    default_low_pass_power = 2
     low_pass_filter_pitch = LowPassFilter(default_low_pass_power)
     low_pass_filter_roll = LowPassFilter(default_low_pass_power)
     low_pass_filter_yawl = LowPassFilter(default_low_pass_power)
@@ -19,7 +20,8 @@ class IMU(object):
     K = 0.95
     K1 = 1 - K
 
-    def __init__(self, bus, gyro_address, accel_address, compass_address, name, gyro_scale=L3G4200D.FS_2000, accel_scale=ADXL345.AFS_16g):
+    def __init__(self, bus, gyro_address, accel_address, compass_address, barometer_address, name, gyro_scale=L3G4200D.FS_2000,
+                 accel_scale=ADXL345.AFS_16g):
         self.bus = bus
         self.gyro_address = gyro_address
         self.accel_address = accel_address
@@ -29,6 +31,7 @@ class IMU(object):
         self.accelerometer = ADXL345(bus, accel_address, name + "-accelerometer", accel_scale)
         self.gyroscope = L3G4200D(bus, gyro_address, name + "-gyroscope", gyro_scale)
         self.compass = HMC5883L(bus, compass_address, name + "-compass")
+        self.barometer = BMP085(bus, barometer_address, name + "-barometer")
 
         self.last_time = time.time()
         self.time_diff = 0
@@ -100,6 +103,9 @@ class IMU(object):
                  self.low_pass_filter_roll_speed.filter(self.gyro_scaled_y),
                  self.low_pass_filter_yawl_speed.filter(self.gyro_scaled_z))
 
+
+    def read_temperature_and_pressure(self):
+        return self.barometer.read_temperature_and_pressure()
 
     def set_compass_offsets(self,x_offset, y_offset, z_offset):
         self.compass.set_offsets(x_offset, y_offset, z_offset)

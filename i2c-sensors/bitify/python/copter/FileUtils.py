@@ -4,6 +4,7 @@ __author__ = 'ivanbahdanau'
 import csv
 import os
 
+# commit 1 on master
 
 def read_file_data():
     global copter_is_on, copter_torque, is_kill, control_force, z_axe_control
